@@ -99,7 +99,7 @@ The architecture is designed for redundancy and automated recovery. Client traff
 *   **Infrastructure as Code:** Terraform
 *   **Monitoring & Alerting:** Amazon CloudWatch (Alarms, Logs, Metrics)
 *   **Automation:** AWS Lambda (Python/Node.js), Bash Scripts
-*   **Authentication:** `[TODO: Specify MFA tool, e.g., Google Authenticator (PAM), Duo]`
+*   **Authentication:** Google Authenticator PAM
 
 ## Getting Started
 
@@ -151,9 +151,9 @@ The entire infrastructure is provisioned using Terraform to ensure repeatability
 
 ### Multi-Factor Authentication (MFA)
 
-To fortify security, MFA is enforced for all VPN connections. This project uses `[TODO: e.g., the Google Authenticator PAM module with FreeRADIUS]`.
+To fortify security, MFA is enforced for all VPN connections. This project uses the Google Authenticator PAM module with FreeRADIUS.
 
-*   **Setup:** The configuration involves `[TODO: Briefly describe the setup process, e.g., installing the PAM library on the EC2 instances and configuring the OpenVPN server to use it for authentication.]`.
+*   **Setup:** The configuration involves installing the libpam-google-authenticator library on the RADIUS server, creating a dedicated PAM service profile for FreeRADIUS, and configuring FreeRADIUS to use this profile for authentication. The OpenVPN server is then configured with a RADIUS plugin to delegate all user authentication requests to the now MFA-enabled FreeRADIUS server.
 *   **User Experience:** When connecting, users must provide their password and a time-based one-time password (TOTP) from their authenticator app.
 
 ### Firewall & Security Groups
@@ -181,7 +181,7 @@ The failover process is triggered by a combination of pre-configured CloudWatch 
 *   **Route 53 Health Check Status:** The primary trigger for failover.
 *   **StatusCheckFailed:** Triggers if the instance fails its underlying system or instance status checks.
 *   **High CPU Utilization:** An alarm to detect an overloaded or unresponsive server.
-*   **`[TODO: Add any other custom metrics, e.g., a custom script that checks the status of the OpenVPN/strongSwan daemon and pushes a metric to CloudWatch.]`**
+*   **Custom VPN Service Health Metric:** A custom script, executed via cron, runs every minute on each VPN instance. This script checks the status of the openvpn and strongswan service daemons. It then pushes a custom metric (e.g., VPNDaemonHealth, with a value of 1 for healthy or 0 for unhealthy) to CloudWatch. An alarm is configured to trigger if this metric reports 0 for several consecutive minutes, indicating a software-level failure that requires a failover.
 
 ## Performance Optimization
 
